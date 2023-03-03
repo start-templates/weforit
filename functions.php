@@ -67,3 +67,42 @@ add_action( 'get_footer', function(){
 	wp_enqueue_style( 'slick-theme', get_template_directory_uri().'/dist/slick/slick-theme.css');
 	wp_enqueue_script('slick', get_template_directory_uri().'/dist/slick/slick.min.js','','',true);
 });
+
+function theme_get_menu_array($current_menu='Main Menu') {
+
+    $menu_array = wp_get_nav_menu_items($current_menu);
+
+    $menu = array();
+    if(!function_exists('populate_children')){
+        function populate_children($menu_array, $menu_item)
+        {
+            $children = array();
+            if (!empty($menu_array)){
+                foreach ($menu_array as $k=>$m) {
+                    if ($m->menu_item_parent == $menu_item->ID) {
+                        $children[$m->ID] = array();
+                        $children[$m->ID]['ID'] = $m->ID;
+                        $children[$m->ID]['title'] = $m->title;
+                        $children[$m->ID]['url'] = $m->url;
+                        unset($menu_array[$k]);
+                        $children[$m->ID]['children'] = populate_children($menu_array, $m);
+                    }
+                }
+            };
+            return $children;
+        }
+    }
+
+    foreach ($menu_array as $m) {
+        if (empty($m->menu_item_parent)) {
+            $menu[$m->ID] = array();
+            $menu[$m->ID]['ID'] = $m->ID;
+            $menu[$m->ID]['title'] = $m->title;
+            $menu[$m->ID]['url'] = $m->url;
+            $menu[$m->ID]['children'] = populate_children($menu_array, $m);
+        }
+    }
+
+    return $menu;
+
+}
